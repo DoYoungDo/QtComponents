@@ -13,50 +13,23 @@ class ShakeLabelPrivate{
 
         QPointF rowPos = q->pos();
         QPointF nowPos = rowPos;
-        QPropertyAnimation * a1 = new QPropertyAnimation(q, "pos", q);
-        a1->setDuration(50);
-        a1->setStartValue(rowPos);
-        a1->setEndValue(nowPos = QPointF(nowPos.x() + 50, nowPos.y()));
-
-        QPropertyAnimation * a2 = new QPropertyAnimation(q, "pos", q);
-        a2->setDuration(80);
-        a2->setStartValue(nowPos);
-        a2->setEndValue(nowPos = QPointF(nowPos.x() + 50, nowPos.y()));
-
-        QPropertyAnimation * a3 = new QPropertyAnimation(q, "pos", q);
-        a3->setDuration(100);
-        a3->setStartValue(nowPos);
-        a3->setEndValue(nowPos = QPointF(nowPos.x() - 100, nowPos.y()));
-
-        QPropertyAnimation * a4 = new QPropertyAnimation(q, "pos", q);
-        a4->setDuration(100);
-        a4->setStartValue(nowPos);
-        a4->setEndValue(nowPos = QPointF(nowPos.x() + 100, nowPos.y()));
-
-        QPropertyAnimation * a5 = new QPropertyAnimation(q, "pos", q);
-        a5->setDuration(100);
-        a5->setStartValue(nowPos);
-        a5->setEndValue(nowPos = QPointF(nowPos.x() - 100, nowPos.y()));
-
-        QPropertyAnimation * a6 = new QPropertyAnimation(q, "pos", q);
-        a6->setDuration(100);
-        a6->setStartValue(nowPos);
-        a6->setEndValue(nowPos = QPointF(nowPos.x() + 100, nowPos.y()));
-
-        QPropertyAnimation * a7 = new QPropertyAnimation(q, "pos", q);
-        a7->setDuration(100);
-        a7->setStartValue(nowPos);
-        a7->setEndValue(nowPos = QPointF(nowPos.x() - 100, nowPos.y()));
-
+        auto createAnimation = [&](int duration,  QPointF start, QPointF end){
+            qDebug() << start << end;
+            QPropertyAnimation * animation = new QPropertyAnimation(q, "pos", q);
+            animation->setDuration(duration);
+            animation->setStartValue(start);
+            animation->setEndValue(end);
+            return animation;
+        };
 
         QSequentialAnimationGroup* group = new QSequentialAnimationGroup(q);
-        group->addAnimation(a1);
-        group->addAnimation(a2);
-        group->addAnimation(a3);
-        group->addAnimation(a4);
-        group->addAnimation(a5);
-        group->addAnimation(a6);
-        group->addAnimation(a7);
+        group->addAnimation(createAnimation(100, nowPos, nowPos = QPointF(nowPos.x() + 50, nowPos.y())));
+        group->addAnimation(createAnimation(150, nowPos, nowPos = QPointF(nowPos.x() + 50, nowPos.y())));
+        group->addAnimation(createAnimation(100, nowPos, nowPos = QPointF(nowPos.x() - 100, nowPos.y())));
+        group->addAnimation(createAnimation(100, nowPos, nowPos = QPointF(nowPos.x() + 100, nowPos.y())));
+        group->addAnimation(createAnimation(100, nowPos, nowPos = QPointF(nowPos.x() - 100, nowPos.y())));
+        group->addAnimation(createAnimation(100, nowPos, nowPos = QPointF(nowPos.x() + 100, nowPos.y())));
+        group->addAnimation(createAnimation(100, nowPos, nowPos = QPointF(nowPos.x() - 100, nowPos.y())));
 
         pAnimationGroup = group;
     }
