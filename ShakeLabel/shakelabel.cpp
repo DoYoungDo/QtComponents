@@ -23,7 +23,7 @@ class ShakeLabelPrivate{
         };
 
         QSequentialAnimationGroup* group = new QSequentialAnimationGroup(q);
-        group->addAnimation(createAnimation(100, nowPos, nowPos = QPointF(nowPos.x() + 50, nowPos.y())));
+        group->addAnimation(createAnimation(50, nowPos, nowPos = QPointF(nowPos.x() + 50, nowPos.y())));
         group->addAnimation(createAnimation(150, nowPos, nowPos = QPointF(nowPos.x() + 50, nowPos.y())));
         group->addAnimation(createAnimation(100, nowPos, nowPos = QPointF(nowPos.x() - 100, nowPos.y())));
         group->addAnimation(createAnimation(100, nowPos, nowPos = QPointF(nowPos.x() + 100, nowPos.y())));
@@ -61,15 +61,18 @@ ShakeLabel::~ShakeLabel()
 void ShakeLabel::shake()
 {
     Q_D(ShakeLabel);
-    if(!d->pAnimationGroup)
+
+    if(d->pAnimationGroup)
     {
-        d->initAnimation();
+        if(d->pAnimationGroup->state() != QAnimationGroup::Stopped)
+        {
+            return;
+        }
+
+        delete d->pAnimationGroup;
     }
 
-    if(d->pAnimationGroup->state() != QAnimationGroup::Stopped)
-    {
-        return;
-    }
+    d->initAnimation();
     d->pAnimationGroup->start();
 }
 
