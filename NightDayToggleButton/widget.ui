@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>461</width>
-    <height>271</height>
+    <width>791</width>
+    <height>307</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,7 +38,7 @@
   <customwidget>
    <class>NightDayToggleButton</class>
    <extends>QWidget</extends>
-   <header>../../../../nightdaytogglebutton.h</header>
+   <header>../../../../NightDayToggleButton/nightdaytogglebutton.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
