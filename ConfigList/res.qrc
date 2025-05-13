@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/checkbox_checked.png</file>
+        <file>res/checkbox_unchecked.png</file>
+        <file>res/config_example.json</file>
+        <file>res/style_example.qss</file>
+        <file>res/arraw_down.png</file>
+        <file>res/arraw_up.png</file>
+        <file>res/clean.png</file>
+        <file>res/filter.png</file>
+        <file>configurationdiaplayer.cpp</file>
+        <file>configurationdiaplayer.h</file>
+    </qresource>
+</RCC>
