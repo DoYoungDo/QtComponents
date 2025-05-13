@@ -1,0 +1,152 @@
+[
+    {
+        "title": "常用配置",
+        "properties": {
+            "files.autoSave": {
+                "type": "string",
+                "description": "控制具有未保存更改的编辑器的 自动保存。",
+                "default": "afterDelay"
+            },
+            "editor.fontSize": {
+                "type": "number",
+                "description": "编辑器中字体的大小。",
+                "default": 14
+            }
+        },
+        "configuration": {
+            "title": "字体设置",
+            "properties": {
+                "editor.fontSize": {
+                    "type": "number",
+                    "description": "编辑器中字体的大小。",
+                    "default": 14
+                }
+            }
+        }
+    },
+    {
+        "title": "文本编辑器",
+        "properties": {
+            "editor.accessibilityPageSize": {
+                "type": "number",
+                "description": "控制编辑器中可由屏幕阅读器一次读出的行数。我们检测到屏幕阅读器时，会自动将默认值设置为 500。警告: 如果行数大于默认值，可能会影响性能。",
+                "default": 2000
+            },
+            "editor.bracketPairColorization.enabled": {
+                "type": "boolean",
+                "description": "控制是否启用括号配对颜色化。",
+                "default": true
+            }
+        },
+        "configuration": [
+            {
+                "title": "光标",
+                "properties": {
+                    "editor.cursorBlinking": {
+                        "type": "string",
+                        "enum": [
+                            "smooth",
+                            "phase",
+                            "solid"
+                        ],
+                        "enumItems": [],
+                        "description": "控制光标闪烁的方式。",
+                        "default": "smooth"
+                    },
+                    "editor.cursorSurroundingLines": {
+                        "type": "number",
+                        "description": "控制光标周围的行数。",
+                        "default": 1
+                    }
+                }
+            },
+            {
+                "title": "格式化",
+                "properties": {
+                    "editor.formatOnPaste": {
+                        "type": "boolean",
+                        "description": "控制在粘贴时是否自动格式化。",
+                        "default": true
+                    },
+                    "editor.formatOnSave": {
+                        "type": "boolean",
+                        "description": "控制在保存时是否自动格式化。",
+                        "default": true
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "title": "扩展",
+        "properties": {},
+        "configuration": [
+            {
+                "title": "C/C++",
+                "properties": {},
+                "configuration": {
+                    "title": "InterlliSence",
+                    "properties": {
+                        "C_Cpp.autocomplete": {
+                            "type": "string",
+                            "description": "控制是否启用自动完成。",
+                            "enum": [
+                                "Disabled",
+                                "Default",
+                                "MSVC-x64",
+                                "MSVC-x86",
+                                "Bundled"
+                            ],
+                            "enumItems": []
+                        }
+                    }
+                }
+            },
+            {
+                "title": "GitLens - Git supercharged",
+                "properties": {},
+                "configuration": [
+                    {
+                        "title": "General",
+                        "properties": {
+                            "gitlens.showWhatsNewAfterUpgrades": {
+                                "type": "boolean",
+                                "description": "控制是否在升级后显示 What's New。",
+                                "default": true
+                            },
+                            "gitlens.outputLevel": {
+                                "type": "string",
+                                "description": "控制 GitLens 输出的级别。",
+                                "enum": [
+                                    "Silent",
+                                    "Errors",
+                                    "Warnings",
+                                    "Info",
+                                    "Verbose",
+                                    "Debug"
+                                ],
+                                "enumItems": [],
+                                "default": "Info"
+                            }
+                        }
+                    },
+                    {
+                        "title": "Inline Blame",
+                        "properties": {
+                            "gitlens.currentLine.enabled": {
+                                "type": "boolean",
+                                "description": "控制是否启用当前行的内联 blame。",
+                                "default": true
+                            },
+                            "gitlens.currentLine.format": {
+                                "type": "string",
+                                "description": "控制当前行的内联 blame 的格式。",
+                                "default": "${author} ${ago}"
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]

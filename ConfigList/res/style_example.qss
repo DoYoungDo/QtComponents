@@ -1,0 +1,169 @@
+/* 设置整个配置界面背景颜色 */
+ConfigurationDiaplayer {
+    background: #1c1c1c;
+}
+
+/* 设置拖动条背景颜色 */
+ConfigurationDiaplayer QSplitter::handle {
+    background-color: #262626;
+}
+
+/* 设置拖动条宽度 */
+ConfigurationDiaplayer QSplitter::handle:vertical {
+    height: 1px;
+}
+
+/* 设置搜索栏样式 */
+ConfigurationDiaplayer #serachBar {
+    border: 1px solid #2b2b2b;
+    background: #2b2b2b;
+    padding-left: 3px;
+}
+
+/* 设置搜索栏有焦点时样式 */
+ConfigurationDiaplayer #serachBar:focus {
+    margin-top: 1px;
+    border: 1px solid #3668c2;
+    background: transparent;
+}
+
+/* 设置搜索栏上按钮样式 */
+ConfigurationDiaplayer #serachBar QPushButton {
+    background: transparent;
+    border: none;
+}
+
+/* 设置搜索栏悬浮样式 */
+ConfigurationDiaplayer #serachBar QPushButton:hover {
+    background: rgba(158, 158, 158, 50);
+    border: 1px solid rgba(158, 158, 158, 50);
+    border-radius: 2px;
+}
+
+/* 设置搜索栏清理按钮图片 */
+ConfigurationDiaplayer #serachBar #clean {
+    image: url(:/res/clean.png);
+}
+
+/* 设置搜索栏过滤按钮图片 */
+ConfigurationDiaplayer #serachBar #filter {
+    image: url(:/res/filter.png);
+}
+
+/**/
+ConfigurationDiaplayer #tree {
+    background: transparent;
+}
+
+/**/
+ConfigurationDiaplayer #tree::item {
+    border: none;
+    color: #acacac;
+}
+
+/**/
+ConfigurationDiaplayer #tree::item:selected {
+    border: 1px solid #3668c2;
+    color: #fefefe;
+}
+
+/* 设置配置项列表背景 */
+ConfigurationDiaplayer #list {
+    background: transparent;
+}
+
+/* 设置配置列表项选中边框 */
+ConfigurationDiaplayer #list:item:selected {
+    border: 1px solid #3668c2;
+}
+
+/* 设置配置项一级标题颜色 */
+ConfigurationDiaplayer #title[titleLevel='1'] {
+    color: red;
+}
+
+/* 设置配置项二级标题颜色 */
+ConfigurationDiaplayer #title[titleLevel='2'] {
+    color: green;
+}
+
+/* 设置配置项三级标题颜色 */
+ConfigurationDiaplayer #title[titleLevel='3'] {
+    color: blue;
+}
+
+/**/
+ConfigurationDiaplayer #id {
+    color: yellow;
+}
+
+/**/
+ConfigurationDiaplayer #description {
+    color: gray;
+}
+
+/**/
+ConfigurationDiaplayer QLineEdit {
+    border: none;
+    background: #2b2b2b;
+}
+
+/**/
+ConfigurationDiaplayer QLineEdit:focus {
+    border: 1px solid #3668c2;
+}
+
+/**/
+ConfigurationDiaplayer QCheckBox::indicator {
+    width: 20px;
+    height: 20px;
+}
+
+/**/
+ConfigurationDiaplayer QCheckBox::indicator:unchecked {
+    image: url(:/res/checkbox_unchecked.png);
+}
+
+/**/
+ConfigurationDiaplayer QCheckBox::indicator:checked {
+    image: url(:/res/checkbox_checked.png);
+}
+
+/**/
+ConfigurationDiaplayer QComboBox {
+    border: none;
+    padding: 5px 25px 5px 10px;
+    background: #2b2b2b;
+    height: 25px;
+}
+
+/**/
+ConfigurationDiaplayer QComboBox:on {
+    border: 1px solid #3668c2;
+}
+
+/**/
+ConfigurationDiaplayer QComboBox::drop-down {
+    width: 24px;
+    background: transparent;
+}
+
+/**/
+ConfigurationDiaplayer QComboBox::down-arrow {
+    image: url(:/res/arraw_down.png);
+    width: 12px;
+    height: 12px;
+}
+
+/**/
+ConfigurationDiaplayer QComboBox::down-arrow:on {
+    image: url(:/res/arraw_up.png);
+    width: 12px;
+    height: 12px;
+}
+
+/**/
+ConfigurationDiaplayer QComboBox QAbstractItemView {
+    border: 1px solid #3668c2;
+    selection-background-color: #3668c2;
+}
