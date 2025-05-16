@@ -12,8 +12,8 @@ Widget::Widget(QWidget *parent) :
     auto edit = new ScintillaEdit();
 
     QColor bgColor = QColor("#555AF0");
-    edit->send(SCI_STYLESETBACK, STYLE_DEFAULT, bgColor.red() | bgColor.green() << 8 | bgColor.blue() << 16);  // 深灰色背景
-    edit->send(SCI_SETMARGINWIDTHN, 0, 20);
+    edit->send(SCI_STYLESETBACK, STYLE_DEFAULT, bgColor.red() | bgColor.green() << 8 | bgColor.blue() << 16); // 蓝色背景
+    edit->send(SCI_SETMARGINWIDTHN, 0, 20); // 显示行号
 
     ui->widget->layout()->addWidget(edit);
 }
