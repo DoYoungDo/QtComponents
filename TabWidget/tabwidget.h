@@ -25,7 +25,7 @@ public:
 
 private:
     class TabMoveMimeDataPrivate* _d;
-    friend TabMoveMimeDataPrivate;
+    friend class TabMoveMimeDataPrivate;
 };
 
 class TabBar: public QTabBar{
@@ -42,7 +42,7 @@ protected:
 
 private:
     class TabBarPrivate* _d;
-    friend TabBarPrivate;
+    friend class TabBarPrivate;
 };
 
 class TabWidget : public QTabWidget{
@@ -73,7 +73,7 @@ private slots:
     void onTabDraged(int index);
 private:
     class TabWidgetPrivate* _d;
-    friend TabWidgetPrivate;
+    friend class TabWidgetPrivate;
 };
 
 class TabContainer : public QWidget
@@ -91,7 +91,7 @@ private slots:
     void onPageEntered(const TabMoveMimeData* data, TabWidget::Orientations ori);
 private:
     class TabContainerPrivate* _d;
-    friend TabContainerPrivate;
+    friend class TabContainerPrivate;
 
     // QWidget interface
 protected:
