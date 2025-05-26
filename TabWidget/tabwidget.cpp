@@ -223,8 +223,8 @@ private:
     }
     void connectTabWidget(TabWidget* tabWidget)
     {
-        _q->connect(tabWidget, &TabWidget::pageRemoved, _q, &TabContainer::onPageRemoved);
-        _q->connect(tabWidget, &TabWidget::pageEntered, _q, &TabContainer::onPageEntered);
+        // _q->connect(tabWidget, &TabWidget::pageRemoved, _q, &TabContainer::onPageRemoved);
+        // _q->connect(tabWidget, &TabWidget::pageEntered, _q, &TabContainer::onPageEntered);
     }
 
     inline bool isContainer(QWidget* w)
@@ -234,22 +234,22 @@ private:
 
     void rebuildStructure()
     {
-        if(!pParentContainer)
-        {
-            return;
-        }
+        // if(!pParentContainer)
+        // {
+        //     return;
+        // }
 
-        if(mEleWidgetList.size() == 1)
-        {
-            int index = pParentContainer->_d->pMainLayoutSplitter->indexOf(_q);
-            Q_ASSERT(index != -1);
+        // if(mEleWidgetList.size() == 1)
+        // {
+        //     int index = pParentContainer->_d->pMainLayoutSplitter->indexOf(_q);
+        //     Q_ASSERT(index != -1);
 
-            pParentContainer->_d->pMainLayoutSplitter->replaceWidget(index, mEleWidgetList.at(0));
+        //     pParentContainer->_d->pMainLayoutSplitter->replaceWidget(index, mEleWidgetList.at(0));
 
-            pParentContainer->_d->rebuildStructure();
+        //     pParentContainer->_d->rebuildStructure();
 
-            _q->deleteLater();
-        }
+        //     _q->deleteLater();
+        // }
         // TabContainer* sdr = qobject_cast<TabContainer*>(this->sender());
         // Q_ASSERT(sdr);
         // int index = _d->pMainLayoutSplitter->indexOf(sdr);
@@ -265,11 +265,12 @@ private:
     }
 private:
     QSplitter* pMainLayoutSplitter = nullptr;
-    QList<QWidget*> mEleWidgetList;
+    // QList<QWidget*> mEleWidgetList;
 
     TabContainer* _q = nullptr;
-    TabContainer* pParentContainer = nullptr;
     friend class TabContainer;
+    friend class TabWidget;
+    // TabContainer* pParentContainer = nullptr;
 };
 /************************* ⬆︎ TabContainerPrivate ⬆︎ *************************/
 
@@ -367,7 +368,24 @@ void TabWidget::dropEvent(QDropEvent* event)
             }
             else
             {
-                emit pageEntered(data, _d->mShowMaskOrientation);
+                // emit pageEntered(data, _d->mShowMaskOrientation);
+                TabContainer* currentContainer = _d->pContainer;
+                QSplitter* layout = currentContainer->_d->pMainLayoutSplitter;
+                int index = layout->indexOf(this);
+                Q_ASSERT(index != -1);
+                // index = index == -1 ? 0 : index;
+
+                int orientation = (_d->mShowMaskOrientation == TabWidget::LEFT || _d->mShowMaskOrientation == TabWidget::RIGHT) ? Qt::Horizontal : Qt::Vertical;
+                if(orientation == layout->orientation())
+                {
+                    TabWidget* newTab = currentContainer->_d->createTabWidget();
+                    newTab->addTab(data->page(), data->title());
+                    layout->insertWidget((_d->mShowMaskOrientation == TabWidget::LEFT || _d->mShowMaskOrientation == TabWidget::TOP) ? index : index + 1, newTab);
+                }
+                else
+                {
+
+                }
             }
             event->acceptProposedAction();
             return;
@@ -405,7 +423,20 @@ void TabWidget::tabInserted(int index)
 void TabWidget::tabRemoved(int index)
 {
     QTabWidget::tabRemoved(index);
-    emit pageRemoved();
+
+    if(this->count() == 0)
+    {
+        this->deleteLater();
+    }
+    // TabWidget* from = qobject_cast<TabWidget*>(this->sender());
+    // Q_ASSERT(from);
+    // if(from->count() == 0)
+    // {
+    //     // _d->mEleWidgetList.removeOne(from);
+    //     from->deleteLater();
+    // }
+
+    // emit pageRemoved();
 }
 
 void TabWidget::onTabDraged(int index)
@@ -439,7 +470,7 @@ void TabContainer::addTab(QWidget* page, const QString& label)
         TabWidget* tab = _d->createTabWidget();
         tab->addTab(page, label);
         _d->pMainLayoutSplitter->addWidget(tab);
-        _d->mEleWidgetList << tab;
+        // _d->mEleWidgetList << tab;
     }
     else
     {
@@ -466,7 +497,7 @@ void TabContainer::addTab(QWidget* page, const QString& label, bool split)
     TabWidget* tab = _d->createTabWidget();
     tab->addTab(page, label);
     _d->pMainLayoutSplitter->addWidget(tab);
-    _d->mEleWidgetList << tab;
+    // _d->mEleWidgetList << tab;
 }
 
 // void TabContainer::addContainer(TabContainer* container)
@@ -474,39 +505,34 @@ void TabContainer::addTab(QWidget* page, const QString& label, bool split)
 //     _d->pMainLayoutSplitter->addWidget(container);
 // }
 
-void TabContainer::clear()
-{
+// void TabContainer::onPageRemoved()
+// {
+//     // qDebug() << "tab removed" << _d->pMainLayoutSplitter->count();
+//     TabWidget* from = qobject_cast<TabWidget*>(this->sender());
+//     Q_ASSERT(from);
+//     if(from->count() == 0)
+//     {
+//         _d->mEleWidgetList.removeOne(from);
+//         from->deleteLater();
+//     }
+// }
 
-}
+// void TabContainer::onPageEntered(const TabMoveMimeData* data, TabWidget::Orientations ori)
+// {
+//     // qDebug() << "tab entered" << title << ori;
+//     QWidget* sdr = qobject_cast<QWidget*>(this->sender());
+//     int index = _d->pMainLayoutSplitter->indexOf(sdr);
+//     Q_ASSERT(index != -1);
+//     // index = index == -1 ? 0 : index;
 
-void TabContainer::onPageRemoved()
-{
-    // qDebug() << "tab removed" << _d->pMainLayoutSplitter->count();
-    TabWidget* from = qobject_cast<TabWidget*>(this->sender());
-    Q_ASSERT(from);
-    if(from->count() == 0)
-    {
-        _d->mEleWidgetList.removeOne(from);
-        from->deleteLater();
-    }
-}
-
-void TabContainer::onPageEntered(const TabMoveMimeData* data, TabWidget::Orientations ori)
-{
-    // qDebug() << "tab entered" << title << ori;
-    QWidget* sdr = qobject_cast<QWidget*>(this->sender());
-    int index = _d->pMainLayoutSplitter->indexOf(sdr);
-    Q_ASSERT(index != -1);
-    // index = index == -1 ? 0 : index;
-
-    int orientation = (ori == TabWidget::LEFT || ori == TabWidget::RIGHT) ? Qt::Horizontal : Qt::Vertical;
-    if(orientation == _d->pMainLayoutSplitter->orientation())
-    {
-        TabWidget* newTab = _d->createTabWidget();
-        newTab->addTab(data->page(), data->title());
-        _d->pMainLayoutSplitter->insertWidget((ori == TabWidget::LEFT || ori == TabWidget::TOP) ? index : index + 1, newTab);
-        return;
-    }
+//     int orientation = (ori == TabWidget::LEFT || ori == TabWidget::RIGHT) ? Qt::Horizontal : Qt::Vertical;
+//     if(orientation == _d->pMainLayoutSplitter->orientation())
+//     {
+//         TabWidget* newTab = _d->createTabWidget();
+//         newTab->addTab(data->page(), data->title());
+//         _d->pMainLayoutSplitter->insertWidget((ori == TabWidget::LEFT || ori == TabWidget::TOP) ? index : index + 1, newTab);
+//         return;
+//     }
 
     // if(_d->pMainLayoutSplitter->count() == 1)
     // {
@@ -545,7 +571,7 @@ void TabContainer::onPageEntered(const TabMoveMimeData* data, TabWidget::Orienta
     // {
     //     data->container()->_d->rebuildStructure();
     // }
-}
+// }
 
 void TabContainer::paintEvent(QPaintEvent* event)
 {

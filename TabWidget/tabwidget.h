@@ -84,14 +84,11 @@ public:
 
     void addTab(QWidget *page, const QString &label);
     void addTab(QWidget *page, const QString &label, bool split);
-    void clear();
 
-private slots:
-    void onPageRemoved();
-    void onPageEntered(const TabMoveMimeData* data, TabWidget::Orientations ori);
 private:
     class TabContainerPrivate* _d;
     friend class TabContainerPrivate;
+    friend class TabWidget;
 
     // QWidget interface
 protected:
