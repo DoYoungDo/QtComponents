@@ -86,11 +86,15 @@ void Widget::on_pushButton_14_clicked()
 void Widget::on_pushButton_15_clicked()
 {
     pPictureLoading->startLoading(ui->widget);
+    pLoading->startLoading(ui->groupBox);
+    pLoading->startLoading(ui->tabWidget, true, 20);
 }
 
 
 void Widget::on_pushButton_16_clicked()
 {
     pPictureLoading->stopLoading(ui->widget);
+    pLoading->stopLoading(ui->groupBox);
+    pLoading->stopLoading(ui->tabWidget);
 }
 

@@ -6,7 +6,7 @@
 #include <QWidget>
 
 namespace {
-const int TIME_INTEVEL = 10; // MS
+const int TIME_INTEVEL = 5; // MS
 }
 
 struct LoadingWidgetStateInfo{
@@ -249,16 +249,9 @@ void PictureLoadingWidget::drawLoading(QPainter* p, QStyleOption* opt)
     tran.rotate(option->nextRotate());
     p->setTransform(tran);
 
-    const int penWidth = 2;
-    int r = option->radius() - penWidth;
+    int r = option->radius();
     // qDebug() << "r:" << r << option->rect;
     int wAH = r * 2;
-
-    QPen pen;
-    pen.setStyle(Qt::DotLine);
-    pen.setWidth(penWidth);
-    pen.setColor(Qt::gray);
-    p->setPen(pen);
 
     p->drawPixmap(-r, -r, wAH, wAH, QPixmap(":/loading.png"));
 }
