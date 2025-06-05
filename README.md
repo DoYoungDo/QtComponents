@@ -12,3 +12,7 @@
 集成Scintiall控件
 
 ![](README/ScintillaBuildTest.gif)
+
+## LoadingWidget
+
+![](README/LoadingWidget.gif)
