@@ -25,6 +25,10 @@ void Widget::on_pushButton_clicked()
     // layout->addWidget(new QLabel(title));
 
     ui->widget->addTab(w, title, ui->checkBox->isChecked());
+
+    int num = title.toInt();
+    num++;
+    ui->lineEdit->setText(QString::number(num));
 }
 
 

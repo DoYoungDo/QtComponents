@@ -9,6 +9,16 @@
 class TabWidget;
 class TabContainer;
 
+class InvalidWidget : public QWidget{
+    Q_OBJECT
+public:
+    InvalidWidget(QWidget* parent = nullptr):QWidget(parent){}
+
+    // QWidget interface
+protected:
+    virtual void paintEvent(QPaintEvent* event) override;
+};
+
 class TabMoveMimeData : public QMimeData{
     Q_OBJECT
 public:
@@ -74,6 +84,7 @@ private slots:
 private:
     class TabWidgetPrivate* _d;
     friend class TabWidgetPrivate;
+    friend class TabContainerPrivate;
 };
 
 class TabContainer : public QWidget
