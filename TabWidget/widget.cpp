@@ -34,21 +34,11 @@ void Widget::on_pushButton_clicked()
 
 void Widget::on_pushButton_2_clicked()
 {
-
+    ui->widget->removeAll();
 }
-
 
 void Widget::on_pushButton_3_clicked()
 {
-    // QString title = ui->lineEdit_2->text();
-
-    // QWidget* w = new QWidget;
-    // QVBoxLayout* layout = new QVBoxLayout(w);
-    // layout->addWidget(new QLabel(title));
-
-    // TabContainer* c = new TabContainer;
-
-    // ui->widget->addContainer(c);
-    // c->addTab(w, title);
+    ui->widget->print();
 }
 

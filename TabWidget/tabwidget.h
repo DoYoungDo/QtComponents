@@ -3,6 +3,8 @@
 
 #include <QEvent>
 #include <QMimeData>
+#include <QPainter>
+#include <QSplitter>
 #include <QTabBar>
 #include <QTabWidget>
 
@@ -16,7 +18,14 @@ public:
 
     // QWidget interface
 protected:
-    virtual void paintEvent(QPaintEvent* event) override;
+    virtual void paintEvent(QPaintEvent* event) override
+    {
+        QWidget::paintEvent(event);
+
+        QPainter p(this);
+        p.setBrush(Qt::yellow);
+        p.drawRect(this->rect().marginsRemoved(QMargins(10,10,10,10)));
+    }
 };
 
 class TabMoveMimeData : public QMimeData{
@@ -87,6 +96,32 @@ private:
     friend class TabContainerPrivate;
 };
 
+class TabSplitter : public QSplitter
+{
+public:
+    explicit TabSplitter(QWidget* parent = nullptr);
+
+public:
+    void addWidget(QWidget *w);
+    void insertWidget(int index, QWidget *w);
+    QWidget *replaceWidget(int index, QWidget *w);
+    int indexOf(QWidget* w);
+    QWidget* tabkeWidget(int index);
+    QList<QWidget*> takeAll();
+    void removeWidget(QWidget* w);
+    void removeWidget(int index);
+    void removeAll();
+    int widgetCount();
+    bool isEmpty();
+    QWidget* first();
+    QWidget* last();
+
+    TabSplitter& operator<<(QWidget* w);
+private:
+    class TabSplitterPrivate* _d;
+    friend class TabSplitterPrivate;
+};
+
 class TabContainer : public QWidget
 {
     Q_OBJECT
@@ -95,7 +130,8 @@ public:
 
     void addTab(QWidget *page, const QString &label);
     void addTab(QWidget *page, const QString &label, bool split);
-
+    void removeAll();
+    void print();
 private:
     class TabContainerPrivate* _d;
     friend class TabContainerPrivate;
