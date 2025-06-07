@@ -35,6 +35,7 @@ void Widget::on_pushButton_clicked()
 void Widget::on_pushButton_2_clicked()
 {
     ui->widget->removeAll();
+    ui->lineEdit->setText(QString::number(1));
 }
 
 void Widget::on_pushButton_3_clicked()
