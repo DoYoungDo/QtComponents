@@ -583,7 +583,7 @@ TabSplitter::TabSplitter(QWidget* parent)
     : QSplitter(parent)
     , _d(new TabSplitterPrivate(this))
 {
-
+    this->setChildrenCollapsible(false);
 }
 
 void TabSplitter::addWidget(QWidget* w)
