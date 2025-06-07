@@ -24,7 +24,7 @@ void Widget::on_pushButton_clicked()
     // QVBoxLayout* layout = new QVBoxLayout(w);
     // layout->addWidget(new QLabel(title));
 
-    ui->widget->addTab(w, title, ui->checkBox->isChecked());
+    ui->widget->addPage(w, title, ui->checkBox->isChecked());
 
     int num = title.toInt();
     num++;

@@ -15,6 +15,8 @@ const char* TYPE_CONTAINER_WIDGET = "type.container.widget";
 const char* TYPE_TITLE = "type.title";
 
 const qreal MASK_OPACITY = 0.3;
+const int INDICATOR_RECT_WIDTH = 2; // px
+const int INDICATOR_RECT_WIDTH_HALF = 1; // px
 // const char* TYPE_ORIENTATION = "type.orientation";
 }
 
@@ -78,23 +80,81 @@ TabContainer* TabMoveMimeData::container() const
 /************************* ⬆︎ TabMoveMimeData ⬆︎ *************************/
 
 class TabBarPrivate{
-    TabBarPrivate(TabBar* q):_q(q){}
+    enum Orientations{
+        LEFT,
+        RIGHT,
+    };
+    TabBarPrivate(TabBar* q, TabWidget* tab):_q(q),pTabWidget(tab){}
 
+    void showIndicator(const TabMoveMimeData* data, QPointF pos)
+    {
+        // qDebug() << "show indicator";
+        QPoint p = pos.toPoint();
+        int index = _q->tabAt(p);
+        // qDebug() << "cur index" << index;
+        if(index == -1)
+        {
+            return;
+        }
+
+        int currentIndex = _q->currentIndex();
+        if(currentIndex == index && data->fromTabWidget() == pTabWidget)
+        {
+            canDrop = false;
+            _q->repaint();
+            return;
+        }
+
+        canDrop = true;
+
+        QRect tabRect = _q->tabRect(index);
+        QPoint center = tabRect.center();
+
+        QSize indicatorSize = QSize(INDICATOR_RECT_WIDTH, tabRect.height());
+
+        if(p.x() <= center.x())
+        {
+            indicatorRect = QRect(tabRect.topLeft(), indicatorSize);
+            orientations = LEFT;
+            targetIndex = index;
+        }
+        else
+        {
+            indicatorRect = QRect(QPoint(tabRect.right() - INDICATOR_RECT_WIDTH, tabRect.top()), indicatorSize);
+            orientations = RIGHT;
+            targetIndex = index + 1;
+        }
+
+        // qDebug() << "canDrop" << canDrop << "targetIndex" << targetIndex << "ori" << orientations;
+
+        targetIndex = targetIndex < 0 ? 0 : targetIndex >= _q->count() ? _q->count() : targetIndex;
+
+        _q->repaint();
+    }
+    void hideIndicator()
+    {
+        canDrop = false;
+        _q->repaint();
+    }
 private:
     bool isMousePressed = false;
     QPoint pressedPos;
 
-    TabWidget* pTabWidget = nullptr;
+    bool canDrop = false;
+    QRect indicatorRect;
+    int targetIndex = -1;
+    Orientations orientations;
 
     TabBar* _q;
     friend class TabBar;
+    TabWidget* pTabWidget = nullptr;
 };
 /************************* ⬆︎ TabBarPrivate ⬆︎ *************************/
 
 class TabWidgetPrivate{
     TabWidgetPrivate(TabWidget* q):_q(q)
     {
-        pTabbar = new TabBar(_q);
+        pTabbar = new TabBar(_q, _q);
         _q->connect(pTabbar, &TabBar::tabDraged, _q, &TabWidget::onTabDraged);
 
         _q->setTabBar(pTabbar);
@@ -169,7 +229,7 @@ class TabWidgetPrivate{
             mShowMask = false;
         }
 
-        _q->update();
+        _q->repaint();
     }
     void hideTabMask()
     {
@@ -179,7 +239,7 @@ class TabWidgetPrivate{
         }
 
         mShowMask = false;
-        _q->update();
+        _q->repaint();
     }
     QColor invertColor(const QColor &color) {
         return QColor(
@@ -216,6 +276,7 @@ private:
     TabContainer* pContainer = nullptr;
     TabWidget* _q;
     friend class TabWidget;
+    friend class TabBar;
     friend class TabContainerPrivate;
 };
 /************************* ⬆︎ TabWidgetPrivate ⬆︎ *************************/
@@ -356,7 +417,39 @@ private:
                         }
                         else if(container->_d->pMainLayoutSplitter->orientation() == pParentContainer->_d->pMainLayoutSplitter->orientation())
                         {
+                            // qDebug() << "same ori";
+                            QList<QWidget*> widgets = container->_d->pMainLayoutSplitter->takeAll();
+                            Q_ASSERT(!widgets.isEmpty());
 
+                            QWidget* first = widgets.takeAt(0);
+                            if(isContainer(first))
+                            {
+                                qobject_cast<TabContainer*>(first)->_d->pParentContainer = pParentContainer;
+                            }
+                            else
+                            {
+                                qobject_cast<TabWidget*>(first)->_d->pContainer = pParentContainer;
+                            }
+
+                            int index = pParentContainer->_d->pMainLayoutSplitter->indexOf(container);
+                            pParentContainer->_d->pMainLayoutSplitter->replaceWidget(index, first);
+                            for(int i = 0;i < widgets.size();++i)
+                            {
+                                QWidget* w = widgets.at(i);
+                                if(isContainer(w))
+                                {
+                                    qobject_cast<TabContainer*>(w)->_d->pParentContainer = pParentContainer;
+                                }
+                                else
+                                {
+                                    qobject_cast<TabWidget*>(w)->_d->pContainer = pParentContainer;
+                                }
+
+                                pParentContainer->_d->pMainLayoutSplitter->insertWidget(index + i +1, w);
+                            }
+
+                            container->deleteLater();
+                            continue;
                         }
                     }
                 }
@@ -370,14 +463,15 @@ private:
 
     TabContainer* _q = nullptr;
     friend class TabContainer;
+    friend class TabBar;
     friend class TabWidget;
     TabContainer* pParentContainer = nullptr;
 };
 /************************* ⬆︎ TabContainerPrivate ⬆︎ *************************/
 
-TabBar::TabBar(QWidget* parent)
+TabBar::TabBar(TabWidget* tabwidget, QWidget* parent)
     :QTabBar(parent)
-    ,_d(new TabBarPrivate(this))
+    ,_d(new TabBarPrivate(this, tabwidget))
 {
     this->setAcceptDrops(true);
 }
@@ -404,6 +498,93 @@ void TabBar::mouseMoveEvent(QMouseEvent* event)
     }
 
     QTabBar::mouseMoveEvent(event);
+}
+
+void TabBar::dragEnterEvent(QDragEnterEvent* event)
+{
+    const TabMoveMimeData *data = qobject_cast<const TabMoveMimeData *>(event->mimeData());
+    // qDebug() << "enter data" << (void*)data;
+    if (data)
+    {
+        _d->showIndicator(data, event->position());
+        event->accept();
+    }
+    QTabBar::dragEnterEvent(event);
+}
+
+void TabBar::dragMoveEvent(QDragMoveEvent* event)
+{
+    const TabMoveMimeData *data = qobject_cast<const TabMoveMimeData *>(event->mimeData());
+    if (data)
+    {
+        _d->showIndicator(data, event->position());
+    }
+    QTabBar::dragMoveEvent(event);
+}
+
+void TabBar::dragLeaveEvent(QDragLeaveEvent* event)
+{
+    _d->hideIndicator();
+
+    QTabBar::dragLeaveEvent(event);
+}
+
+void TabBar::dropEvent(QDropEvent* event)
+{
+    const TabMoveMimeData *data = qobject_cast<const TabMoveMimeData *>(event->mimeData());
+    if(data)
+    {
+        if(_d->canDrop)
+        {
+            _d->hideIndicator();
+
+            QWidget* page = data->page();
+            TabWidget* from = data->fromTabWidget();
+
+            int index = from->indexOf(page);
+            QString title = from->tabText(index);
+            TabContainer* fromContainer = from->_d->pContainer;
+
+            if(_d->pTabWidget == from)
+            {
+                QWidget* targetPage = from->widget(_d->targetIndex);
+                from->removeTab(index);
+                int newTargetIndex = from->indexOf(targetPage);
+                int newIndex = from->insertTab(newTargetIndex, page, title);
+                from->setCurrentIndex(newIndex);
+                this->setCurrentIndex(newIndex);
+            }
+            else
+            {
+                from->removeTab(index);
+
+                int newIndex = _d->pTabWidget->insertTab(_d->targetIndex, page, title);
+                _d->pTabWidget->setCurrentIndex(newIndex);
+                this->setCurrentIndex(newIndex);
+
+                fromContainer->_d->rebuildStructure();
+                _d->pTabWidget->_d->pContainer->_d->rebuildStructure();
+            }
+
+            this->repaint();
+            event->acceptProposedAction();
+            return;
+        }
+    }
+    QTabBar::dropEvent(event);
+}
+
+void TabBar::paintEvent(QPaintEvent* event)
+{
+    QTabBar::paintEvent(event);
+
+    if(_d->canDrop)
+    {
+        QPainter p(this);
+        p.setPen(Qt::transparent);
+        p.setBrush(Qt::white);
+        p.drawRect(_d->indicatorRect);
+    }
 }
 /************************* ⬆︎ TabBar ⬆︎ *************************/
 
@@ -448,12 +629,11 @@ void TabWidget::dragLeaveEvent(QDragLeaveEvent* event)
 
 void TabWidget::dropEvent(QDropEvent* event)
 {
-    _d->hideTabMask();
-
     const TabMoveMimeData *data = qobject_cast<const TabMoveMimeData *>(event->mimeData());
     if(data)
     {
-        qDebug() << "get data";
+        _d->hideTabMask();
+        // qDebug() << "get data";
 
         if(_d->canTrop(data, event->position()))
         {
@@ -563,8 +743,9 @@ void TabWidget::tabRemoved(int index)
 
 void TabWidget::onTabDraged(int index)
 {
-    qDebug() << "tab draged" << index;
+    // qDebug() << "tab draged" << index;
     this->setCurrentIndex(index);
+    _d->pTabbar->setCurrentIndex(index);
 
     TabMoveMimeData* mimeData = new TabMoveMimeData;
     mimeData->setPage(this->widget(index));
@@ -737,7 +918,7 @@ TabContainer::TabContainer(QWidget* parent)
 
 }
 
-void TabContainer::addTab(QWidget* page, const QString& label)
+void TabContainer::addPage(QWidget* page, const QString& label)
 {
     if(_d->pMainLayoutSplitter->isEmpty())
     {
@@ -750,7 +931,7 @@ void TabContainer::addTab(QWidget* page, const QString& label)
         QWidget* ele = _d->pMainLayoutSplitter->last();
         if(_d->isContainer(ele))
         {
-            qobject_cast<TabContainer*>(ele)->addTab(page, label);
+            qobject_cast<TabContainer*>(ele)->addPage(page, label);
         }
         else
         {
@@ -759,11 +940,11 @@ void TabContainer::addTab(QWidget* page, const QString& label)
     }
 }
 
-void TabContainer::addTab(QWidget* page, const QString& label, bool split)
+void TabContainer::addPage(QWidget* page, const QString& label, bool split)
 {
     if(!split)
     {
-        addTab(page, label);
+        addPage(page, label);
         return;
     }
 

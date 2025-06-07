@@ -33,7 +33,7 @@ private:
 class TabBar: public QTabBar{
     Q_OBJECT
 public:
-    TabBar(QWidget *parent = nullptr);
+    TabBar(TabWidget* tabwidget, QWidget *parent = nullptr);
 
 signals:
     void tabDraged(int index);
@@ -41,6 +41,11 @@ protected:
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
     virtual void mouseMoveEvent(QMouseEvent* event) override;
+    virtual void dragEnterEvent(QDragEnterEvent* event) override;
+    virtual void dragMoveEvent(QDragMoveEvent* event) override;
+    virtual void dragLeaveEvent(QDragLeaveEvent* event) override;
+    virtual void dropEvent(QDropEvent* event) override;
+    virtual void paintEvent(QPaintEvent* event) override;
 
 private:
     class TabBarPrivate* _d;
@@ -76,6 +81,7 @@ private slots:
 private:
     class TabWidgetPrivate* _d;
     friend class TabWidgetPrivate;
+    friend class TabBar;
     friend class TabContainerPrivate;
 };
 
@@ -112,14 +118,16 @@ class TabContainer : public QWidget
 public:
     TabContainer(QWidget* parent = nullptr);
 
-    void addTab(QWidget *page, const QString &label);
-    void addTab(QWidget *page, const QString &label, bool split);
+    void addPage(QWidget *page, const QString &label);
+    void addPage(QWidget *page, const QString &label, bool split);
     void removeAll();
 private:
     class TabContainerPrivate* _d;
     friend class TabContainerPrivate;
+    friend class TabBar;
     friend class TabWidget;
 
+// #define TAB_TEST
 #ifdef TAB_TEST
 public:
     void print();
