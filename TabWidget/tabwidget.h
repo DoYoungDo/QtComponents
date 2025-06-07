@@ -11,23 +11,6 @@
 class TabWidget;
 class TabContainer;
 
-class InvalidWidget : public QWidget{
-    Q_OBJECT
-public:
-    InvalidWidget(QWidget* parent = nullptr):QWidget(parent){}
-
-    // QWidget interface
-protected:
-    virtual void paintEvent(QPaintEvent* event) override
-    {
-        QWidget::paintEvent(event);
-
-        QPainter p(this);
-        p.setBrush(Qt::yellow);
-        p.drawRect(this->rect().marginsRemoved(QMargins(10,10,10,10)));
-    }
-};
-
 class TabMoveMimeData : public QMimeData{
     Q_OBJECT
 public:
@@ -106,6 +89,7 @@ public:
     void insertWidget(int index, QWidget *w);
     QWidget *replaceWidget(int index, QWidget *w);
     int indexOf(QWidget* w);
+    QWidget *widget(int index);
     QWidget* tabkeWidget(int index);
     QList<QWidget*> takeAll();
     void removeWidget(QWidget* w);
@@ -137,9 +121,11 @@ private:
     friend class TabContainerPrivate;
     friend class TabWidget;
 
+#ifdef TAB_TEST
     // QWidget interface
 protected:
     virtual void paintEvent(QPaintEvent* event) override;
+#endif
 };
 
 #endif // TABWIDGET_H
