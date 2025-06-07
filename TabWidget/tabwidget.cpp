@@ -18,6 +18,14 @@ const qreal MASK_OPACITY = 0.3;
 const int INDICATOR_RECT_WIDTH = 2; // px
 const int INDICATOR_RECT_WIDTH_HALF = 1; // px
 // const char* TYPE_ORIENTATION = "type.orientation";
+QColor invertColor(const QColor &color) {
+    return QColor(
+        255 - color.red(),
+        255 - color.green(),
+        255 - color.blue(),
+        color.alpha()  // 保留透明度
+        );
+}
 }
 
 class TabMoveMimeDataPrivate{
@@ -66,7 +74,6 @@ TabWidget* TabMoveMimeData::fromTabWidget() const
 {
     return _d->mDatas.value(TYPE_FROM_TAB_WIDGET).value<TabWidget*>();
 }
-
 /************************* ⬆︎ TabMoveMimeData ⬆︎ *************************/
 
 class TabBarPrivate{
@@ -231,14 +238,7 @@ class TabWidgetPrivate{
         mShowMask = false;
         _q->repaint();
     }
-    QColor invertColor(const QColor &color) {
-        return QColor(
-            255 - color.red(),
-            255 - color.green(),
-            255 - color.blue(),
-            color.alpha()  // 保留透明度
-            );
-    }
+
     QPixmap createPixmap(const QString& title)
     {
         QFontMetrics metriceF = _q->fontMetrics();
@@ -578,7 +578,7 @@ void TabBar::paintEvent(QPaintEvent* event)
     {
         QPainter p(this);
         p.setPen(Qt::transparent);
-        p.setBrush(Qt::white);
+        p.setBrush(invertColor(this->palette().brush(QPalette::Window).color()));
         p.drawRect(_d->indicatorRect);
     }
 }
@@ -716,7 +716,7 @@ void TabWidget::paintEvent(QPaintEvent* event)
         p.setOpacity(MASK_OPACITY);
         p.translate(curPos);
         p.setPen(Qt::transparent);
-        p.setBrush(_d->invertColor(this->palette().brush(QPalette::Window).color()));
+        p.setBrush(invertColor(this->palette().brush(QPalette::Window).color()));
         p.drawRoundedRect(_d->mShowMaskRect, 2, 2);
     }
 }
