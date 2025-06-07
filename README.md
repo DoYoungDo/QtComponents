@@ -3,7 +3,6 @@
 ![](README/ShakeLabel.gif)
 
 ## ConfigList
-
 仿vscode配置界面
 
 ![](README/ConfigList.gif)
@@ -16,3 +15,8 @@
 ## LoadingWidget
 
 ![](README/LoadingWidget.gif)
+
+## TabWidget
+可以无限分屏的tabWdiget控件
+
+![](README/TabWidget.gif)
