@@ -502,9 +502,10 @@ void TabWidget::paintEvent(QPaintEvent* event)
         QPointF curPos = this->mapFromGlobal(curWidget->mapToGlobal(curRect.topLeft()));
 
         QPainter p(this);
-        p.setOpacity(0.5);
+        p.setOpacity(1);
         p.translate(curPos);
-        p.setBrush(Qt::white);
+        p.setPen(Qt::transparent);
+        p.setBrush(this->palette().brush(QPalette::Window));
         p.drawRect(_d->mShowMaskRect);
     }
 }
@@ -528,6 +529,8 @@ void TabWidget::tabRemoved(int index)
 void TabWidget::onTabDraged(int index)
 {
     qDebug() << "tab draged" << index;
+    this->setCurrentIndex(index);
+
     TabMoveMimeData* mimeData = new TabMoveMimeData;
     mimeData->setPage(this->widget(index));
     mimeData->setTitle(this->tabText(index));
@@ -739,12 +742,13 @@ void TabContainer::removeAll()
     _d->pMainLayoutSplitter->removeAll();
 }
 
+#ifdef TAB_TEST
+
 void TabContainer::print()
 {
     qDebug() << "count" << _d->pMainLayoutSplitter->count() << "valid count" << _d->pMainLayoutSplitter->widgetCount();
 }
 
-#ifdef TAB_TEST
 void TabContainer::paintEvent(QPaintEvent* event)
 {
     QWidget::paintEvent(event);

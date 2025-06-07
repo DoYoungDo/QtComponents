@@ -115,13 +115,15 @@ public:
     void addTab(QWidget *page, const QString &label);
     void addTab(QWidget *page, const QString &label, bool split);
     void removeAll();
-    void print();
 private:
     class TabContainerPrivate* _d;
     friend class TabContainerPrivate;
     friend class TabWidget;
 
 #ifdef TAB_TEST
+public:
+    void print();
+
     // QWidget interface
 protected:
     virtual void paintEvent(QPaintEvent* event) override;
