@@ -67,16 +67,6 @@ TabWidget* TabMoveMimeData::fromTabWidget() const
     return _d->mDatas.value(TYPE_FROM_TAB_WIDGET).value<TabWidget*>();
 }
 
-void TabMoveMimeData::setContainer(TabContainer* container)
-{
-    _d->mDatas.insert(TYPE_CONTAINER_WIDGET, QVariant::fromValue<TabContainer*>(container));
-}
-
-TabContainer* TabMoveMimeData::container() const
-{
-    return _d->mDatas.value(TYPE_CONTAINER_WIDGET).value<TabContainer*>();
-}
-
 /************************* ⬆︎ TabMoveMimeData ⬆︎ *************************/
 
 class TabBarPrivate{
@@ -751,7 +741,6 @@ void TabWidget::onTabDraged(int index)
     mimeData->setPage(this->widget(index));
     mimeData->setTitle(this->tabText(index));
     mimeData->setFromTabWidget(this);
-    mimeData->setContainer(_d->pContainer);
 
     QDrag *drag = new QDrag(this);
     drag->setPixmap(_d->createPixmap(mimeData->title()));

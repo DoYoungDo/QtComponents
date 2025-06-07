@@ -22,8 +22,6 @@ public:
     QString title() const;
     void setFromTabWidget(TabWidget* from);
     TabWidget* fromTabWidget() const;
-    void setContainer(TabContainer* container);
-    TabContainer* container() const;
 
 private:
     class TabMoveMimeDataPrivate* _d;
@@ -32,7 +30,7 @@ private:
 
 class TabBar: public QTabBar{
     Q_OBJECT
-public:
+private:
     TabBar(TabWidget* tabwidget, QWidget *parent = nullptr);
 
 signals:
@@ -50,11 +48,12 @@ protected:
 private:
     class TabBarPrivate* _d;
     friend class TabBarPrivate;
+    friend class TabWidgetPrivate;
 };
 
 class TabWidget : public QTabWidget{
     Q_OBJECT
-public:
+private:
     enum Orientations{
         LEFT,
         TOP,
@@ -87,7 +86,7 @@ private:
 
 class TabSplitter : public QSplitter
 {
-public:
+private:
     explicit TabSplitter(QWidget* parent = nullptr);
 
 public:
@@ -110,6 +109,7 @@ public:
 private:
     class TabSplitterPrivate* _d;
     friend class TabSplitterPrivate;
+    friend class TabContainerPrivate;
 };
 
 class TabContainer : public QWidget
