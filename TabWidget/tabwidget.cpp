@@ -189,6 +189,25 @@ class TabWidgetPrivate{
             color.alpha()  // 保留透明度
             );
     }
+    QPixmap createPixmap(const QString& title)
+    {
+        QFontMetrics metriceF = _q->fontMetrics();
+
+        int w = metriceF.horizontalAdvance(title) + 20;
+        int h = 30;
+        QPixmap pixmap(w, h);
+        pixmap.fill(Qt::transparent);
+
+        QPainter p(&pixmap);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setBrush(pTabbar->palette().brush(QPalette::Button).color());
+        p.drawRoundedRect(pixmap.rect(), 5, 5);
+
+        p.setPen(pTabbar->palette().color(QPalette::ButtonText));
+        p.drawText(pixmap.rect(), Qt::AlignCenter, title);
+
+        return std::move(pixmap);
+    }
 private:
     TabBar* pTabbar = nullptr;
     bool mShowMask = false;
@@ -554,7 +573,7 @@ void TabWidget::onTabDraged(int index)
     mimeData->setContainer(_d->pContainer);
 
     QDrag *drag = new QDrag(this);
-    // drag->setPixmap(pixmap);
+    drag->setPixmap(_d->createPixmap(mimeData->title()));
     drag->setMimeData(mimeData);
     drag->exec(Qt::MoveAction);
 }
