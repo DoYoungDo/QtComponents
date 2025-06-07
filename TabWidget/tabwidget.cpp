@@ -336,13 +336,19 @@ private:
 
     void rebuildStructure()
     {
+        // 检查当前容器是否有父容器，若有则进行结构重建操作
         if(pParentContainer)
         {
+            // 获取父容器主布局分割器中的部件数量
             int count = pParentContainer->_d->pMainLayoutSplitter->widgetCount();
 
+            // 存储父容器主布局分割器中的 TabContainer 部件
             QList<TabContainer*> containers;
+            // 存储父容器主布局分割器中的 TabWidget 部件
             QList<TabWidget*> tabs;
-            for(int i = 0;i < count;++i)
+
+            // 遍历父容器主布局分割器中的所有部件，将其分类到 containers 和 tabs 列表中
+            for(int i = 0; i < count; ++i)
             {
                 QWidget* w = pParentContainer->_d->pMainLayoutSplitter->widget(i);
                 Q_ASSERT(w);
@@ -356,95 +362,95 @@ private:
                 }
             }
 
+            // 遍历所有的 TabContainer 部件，根据不同情况调整布局结构
             for(TabContainer* container : containers)
             {
+                // 情况 1: 当前 TabContainer 为空，从父容器中移除
                 if(container->_d->pMainLayoutSplitter->isEmpty())
                 {
                     pParentContainer->_d->pMainLayoutSplitter->removeWidget(container);
                     continue;
                 }
-                else
+                // 情况 2: 父容器主布局分割器只有一个部件
+                else if(pParentContainer->_d->isAnyOrirentaion())
                 {
-                    if(pParentContainer->_d->isAnyOrirentaion())
+                    // 同步父容器主布局分割器的方向
+                    pParentContainer->_d->pMainLayoutSplitter->setOrientation(container->_d->pMainLayoutSplitter->orientation());
+                    // 获取当前 TabContainer 中的所有部件
+                    QList<QWidget*> widgets = container->_d->pMainLayoutSplitter->takeAll();
+                    // 移除当前 TabContainer
+                    pParentContainer->_d->pMainLayoutSplitter->removeWidget(container);
+                    // 将部件添加到父容器主布局分割器中
+                    for(QWidget* widget: widgets)
                     {
-                        pParentContainer->_d->pMainLayoutSplitter->setOrientation(container->_d->pMainLayoutSplitter->orientation());
-
-                        QList<QWidget*> widgets = container->_d->pMainLayoutSplitter->takeAll();
-                        pParentContainer->_d->pMainLayoutSplitter->removeWidget(container);
-
-                        for(QWidget* widget: widgets)
+                        if(isContainer(widget))
                         {
-                            if(isContainer(widget))
-                            {
-                                qobject_cast<TabContainer*>(widget)->_d->pParentContainer = pParentContainer;
-                            }
-                            else
-                            {
-                                qobject_cast<TabWidget*>(widget)->_d->pContainer = pParentContainer;
-                            }
-
-                            *pParentContainer->_d->pMainLayoutSplitter << widget;
+                            qobject_cast<TabContainer*>(widget)->_d->pParentContainer = pParentContainer;
                         }
-                        continue;
+                        else
+                        {
+                            qobject_cast<TabWidget*>(widget)->_d->pContainer = pParentContainer;
+                        }
+                        *pParentContainer->_d->pMainLayoutSplitter << widget;
+                    }
+                    continue;
+                }
+                // 情况 3: 当前 TabContainer 主布局分割器只有一个部件
+                else if(container->_d->isAnyOrirentaion())
+                {
+                    QWidget* w = container->_d->pMainLayoutSplitter->tabkeWidget(0);
+                    if(isContainer(w))
+                    {
+                        qobject_cast<TabContainer*>(w)->_d->pParentContainer = pParentContainer;
                     }
                     else
                     {
-                        if(container->_d->isAnyOrirentaion())
-                        {
-                            QWidget* w = container->_d->pMainLayoutSplitter->tabkeWidget(0);
-
-                            if(isContainer(w))
-                            {
-                                qobject_cast<TabContainer*>(w)->_d->pParentContainer = pParentContainer;
-                            }
-                            else
-                            {
-                                qobject_cast<TabWidget*>(w)->_d->pContainer = pParentContainer;
-                            }
-                            pParentContainer->_d->pMainLayoutSplitter->replaceWidget(pParentContainer->_d->pMainLayoutSplitter->indexOf(container), w);
-                            container->deleteLater();
-                            continue;
-                        }
-                        else if(container->_d->pMainLayoutSplitter->orientation() == pParentContainer->_d->pMainLayoutSplitter->orientation())
-                        {
-                            // qDebug() << "same ori";
-                            QList<QWidget*> widgets = container->_d->pMainLayoutSplitter->takeAll();
-                            Q_ASSERT(!widgets.isEmpty());
-
-                            QWidget* first = widgets.takeAt(0);
-                            if(isContainer(first))
-                            {
-                                qobject_cast<TabContainer*>(first)->_d->pParentContainer = pParentContainer;
-                            }
-                            else
-                            {
-                                qobject_cast<TabWidget*>(first)->_d->pContainer = pParentContainer;
-                            }
-
-                            int index = pParentContainer->_d->pMainLayoutSplitter->indexOf(container);
-                            pParentContainer->_d->pMainLayoutSplitter->replaceWidget(index, first);
-                            for(int i = 0;i < widgets.size();++i)
-                            {
-                                QWidget* w = widgets.at(i);
-                                if(isContainer(w))
-                                {
-                                    qobject_cast<TabContainer*>(w)->_d->pParentContainer = pParentContainer;
-                                }
-                                else
-                                {
-                                    qobject_cast<TabWidget*>(w)->_d->pContainer = pParentContainer;
-                                }
-
-                                pParentContainer->_d->pMainLayoutSplitter->insertWidget(index + i +1, w);
-                            }
-
-                            container->deleteLater();
-                            continue;
-                        }
+                        qobject_cast<TabWidget*>(w)->_d->pContainer = pParentContainer;
                     }
+                    // 替换父容器主布局分割器中的部件
+                    pParentContainer->_d->pMainLayoutSplitter->replaceWidget(pParentContainer->_d->pMainLayoutSplitter->indexOf(container), w);
+                    container->deleteLater();
+                    continue;
+                }
+                // 情况 4: 当前 TabContainer 与父容器主布局分割器方向相同
+                else if(container->_d->pMainLayoutSplitter->orientation() == pParentContainer->_d->pMainLayoutSplitter->orientation())
+                {
+                    QList<QWidget*> widgets = container->_d->pMainLayoutSplitter->takeAll();
+                    Q_ASSERT(!widgets.isEmpty());
+
+                    QWidget* first = widgets.takeAt(0);
+                    if(isContainer(first))
+                    {
+                        qobject_cast<TabContainer*>(first)->_d->pParentContainer = pParentContainer;
+                    }
+                    else
+                    {
+                        qobject_cast<TabWidget*>(first)->_d->pContainer = pParentContainer;
+                    }
+
+                    int index = pParentContainer->_d->pMainLayoutSplitter->indexOf(container);
+                    // 替换第一个部件
+                    pParentContainer->_d->pMainLayoutSplitter->replaceWidget(index, first);
+                    // 插入剩余部件
+                    for(int i = 0; i < widgets.size(); ++i)
+                    {
+                        QWidget* w = widgets.at(i);
+                        if(isContainer(w))
+                        {
+                            qobject_cast<TabContainer*>(w)->_d->pParentContainer = pParentContainer;
+                        }
+                        else
+                        {
+                            qobject_cast<TabWidget*>(w)->_d->pContainer = pParentContainer;
+                        }
+                        pParentContainer->_d->pMainLayoutSplitter->insertWidget(index + i + 1, w);
+                    }
+                    container->deleteLater();
+                    continue;
                 }
             }
 
+            // 递归调用父容器的 rebuildStructure 方法，继续重建结构
             pParentContainer->_d->rebuildStructure();
         }
     }
