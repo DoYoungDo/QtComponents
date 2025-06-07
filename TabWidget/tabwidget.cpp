@@ -13,6 +13,8 @@ const char* TYPE_PAGE_WIDGET = "type.page.widget";
 const char* TYPE_FROM_TAB_WIDGET = "type.from.tab.widget";
 const char* TYPE_CONTAINER_WIDGET = "type.container.widget";
 const char* TYPE_TITLE = "type.title";
+
+const qreal MASK_OPACITY = 0.3;
 // const char* TYPE_ORIENTATION = "type.orientation";
 }
 
@@ -129,6 +131,7 @@ class TabWidgetPrivate{
         QRect topRect = curRect.marginsRemoved(QMargins(twentyPresentsHalfWidth,0,twentyPresentsHalfWidth,twentyPresentshalfHeight * 9));
         QRect rightRect = curRect.marginsRemoved(QMargins(twentyPresentsHalfWidth*9,0,0,0));
         QRect bottomRect = curRect.marginsRemoved(QMargins(twentyPresentsHalfWidth,twentyPresentshalfHeight*9,twentyPresentsHalfWidth,0));
+        QRect centerRect = QRect(topRect.left(), topRect.bottom(), topRect.width(), bottomRect.top() - topRect.bottom());
         // qDebug() << "event pos" << pos << "rects" << curRect << leftRect << topRect << rightRect << bottomRect;
 
 
@@ -156,10 +159,14 @@ class TabWidgetPrivate{
             // mShowMaskRect = bottomRect;
             mShowMaskOrientation = TabWidget::BOTTOM;
         }
-        else
+        else if(centerRect.contains(curWidgetPos))
         {
             mShowMaskRect = curRect;
             mShowMaskOrientation = TabWidget::CENTER;
+        }
+        else
+        {
+            mShowMask = false;
         }
 
         _q->update();
@@ -173,6 +180,14 @@ class TabWidgetPrivate{
 
         mShowMask = false;
         _q->update();
+    }
+    QColor invertColor(const QColor &color) {
+        return QColor(
+            255 - color.red(),
+            255 - color.green(),
+            255 - color.blue(),
+            color.alpha()  // 保留透明度
+            );
     }
 private:
     TabBar* pTabbar = nullptr;
@@ -345,7 +360,7 @@ TabBar::TabBar(QWidget* parent)
     :QTabBar(parent)
     ,_d(new TabBarPrivate(this))
 {
-
+    this->setAcceptDrops(true);
 }
 
 void TabBar::mousePressEvent(QMouseEvent* event)
@@ -378,6 +393,7 @@ TabWidget::TabWidget(TabContainer* container, QWidget* parent)
     ,_d(new TabWidgetPrivate(this))
 {
     this->setAcceptDrops(true);
+    this->setUsesScrollButtons(true);
 
     _d->pContainer = container;
 }
@@ -502,11 +518,11 @@ void TabWidget::paintEvent(QPaintEvent* event)
         QPointF curPos = this->mapFromGlobal(curWidget->mapToGlobal(curRect.topLeft()));
 
         QPainter p(this);
-        p.setOpacity(1);
+        p.setOpacity(MASK_OPACITY);
         p.translate(curPos);
         p.setPen(Qt::transparent);
-        p.setBrush(this->palette().brush(QPalette::Window));
-        p.drawRect(_d->mShowMaskRect);
+        p.setBrush(_d->invertColor(this->palette().brush(QPalette::Window).color()));
+        p.drawRoundedRect(_d->mShowMaskRect, 2, 2);
     }
 }
 
