@@ -53,7 +53,7 @@ private:
 
 class TabWidget : public QTabWidget{
     Q_OBJECT
-private:
+public:
     enum Orientations{
         LEFT,
         TOP,
@@ -61,6 +61,7 @@ private:
         BOTTOM,
         CENTER
     };
+private:
     TabWidget(TabContainer* container, QWidget *parent = nullptr);
 
 protected:
@@ -81,6 +82,7 @@ private:
     class TabWidgetPrivate* _d;
     friend class TabWidgetPrivate;
     friend class TabBar;
+    friend class TabContainer;
     friend class TabContainerPrivate;
 };
 
@@ -95,6 +97,7 @@ public:
     QWidget *replaceWidget(int index, QWidget *w);
     int indexOf(QWidget* w);
     QWidget *widget(int index);
+    QList<QWidget*> allWidget();
     QWidget* tabkeWidget(int index);
     QList<QWidget*> takeAll();
     void removeWidget(QWidget* w);
@@ -120,12 +123,15 @@ public:
 
     void addPage(QWidget *page, const QString &label);
     void addPage(QWidget *page, const QString &label, bool split);
+    void addPage(QWidget *page, const QString &label, QWidget* splitFrom, TabWidget::Orientations ori);
     void removeAll();
+
 private:
     class TabContainerPrivate* _d;
     friend class TabContainerPrivate;
     friend class TabBar;
     friend class TabWidget;
+    friend class TabWidgetPrivate;
 
 // #define TAB_TEST
 #ifdef TAB_TEST

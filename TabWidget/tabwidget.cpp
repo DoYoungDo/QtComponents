@@ -239,6 +239,8 @@ class TabWidgetPrivate{
         _q->repaint();
     }
 
+    void addPage(QWidget* page, const QString& title, TabWidget::Orientations ori);
+
     QPixmap createPixmap(const QString& title)
     {
         QFontMetrics metriceF = _q->fontMetrics();
@@ -267,6 +269,7 @@ private:
     TabWidget* _q;
     friend class TabWidget;
     friend class TabBar;
+    friend class TabContainer;
     friend class TabContainerPrivate;
 };
 /************************* ⬆︎ TabWidgetPrivate ⬆︎ *************************/
@@ -454,16 +457,71 @@ private:
             pParentContainer->_d->rebuildStructure();
         }
     }
+
+
 private:
     TabSplitter* pMainLayoutSplitter = nullptr;
+    TabContainer* pParentContainer = nullptr;
 
     TabContainer* _q = nullptr;
     friend class TabContainer;
     friend class TabBar;
     friend class TabWidget;
-    TabContainer* pParentContainer = nullptr;
+    friend class TabWidgetPrivate;
 };
 /************************* ⬆︎ TabContainerPrivate ⬆︎ *************************/
+
+void TabWidgetPrivate::addPage(QWidget* page, const QString& title, TabWidget::Orientations ori)
+{
+    if(ori == TabWidget::CENTER)
+    {
+        _q->addTab(page, title);
+    }
+    else
+    {
+        TabContainer* currentContainer = pContainer;
+        TabSplitter* layout = currentContainer->_d->pMainLayoutSplitter;
+        int index = layout->indexOf(_q);
+        Q_ASSERT(index != -1);
+
+        int orientation = (ori == TabWidget::LEFT || ori == TabWidget::RIGHT) ? Qt::Horizontal : Qt::Vertical;
+        if(orientation == layout->orientation())
+        {
+SAME_ORI:
+            TabWidget* newTab = currentContainer->_d->createTabWidget();
+            newTab->addTab(page, title);
+            layout->insertWidget((ori == TabWidget::LEFT || ori == TabWidget::TOP) ? index : index + 1, newTab);
+        }
+        else
+        {
+            if(currentContainer->_d->isAnyOrirentaion())
+            {
+                layout->setOrientation((Qt::Orientation)orientation);
+                goto SAME_ORI;
+            }
+
+            TabContainer* newContainer = currentContainer->_d->createContainer();
+            newContainer->_d->pMainLayoutSplitter->setOrientation((Qt::Orientation)orientation);
+
+            QWidget* oldWidget = currentContainer-> _d->pMainLayoutSplitter->replaceWidget(index, newContainer);
+            Q_ASSERT(_q == oldWidget);
+            pContainer = newContainer;
+
+            TabWidget* newTab = newContainer->_d->createTabWidget();
+            newTab->addTab(page, title);
+
+            if((ori == TabWidget::LEFT || ori == TabWidget::TOP))
+            {
+                *newContainer->_d->pMainLayoutSplitter << newTab << oldWidget;
+            }
+            else
+            {
+                *newContainer->_d->pMainLayoutSplitter << oldWidget << newTab;
+            }
+        }
+    }
+}
+/************************* ⬆︎ TabWidgetPrivate impletment ⬆︎ *************************/
 
 TabBar::TabBar(TabWidget* tabwidget, QWidget* parent)
     :QTabBar(parent)
@@ -641,54 +699,7 @@ void TabWidget::dropEvent(QDropEvent* event)
             TabContainer* fromContainer = from->_d->pContainer;
             from->removeTab(index);
 
-            if(_d->mShowMaskOrientation == CENTER)
-            {
-                this->addTab(page, title);
-            }
-            else
-            {
-                TabContainer* currentContainer = _d->pContainer;
-                TabSplitter* layout = currentContainer->_d->pMainLayoutSplitter;
-                int index = layout->indexOf(this);
-                Q_ASSERT(index != -1);
-
-                int orientation = (_d->mShowMaskOrientation == TabWidget::LEFT || _d->mShowMaskOrientation == TabWidget::RIGHT) ? Qt::Horizontal : Qt::Vertical;
-                if(orientation == layout->orientation())
-                {
-SAME_ORI:
-                    TabWidget* newTab = currentContainer->_d->createTabWidget();
-                    newTab->addTab(data->page(), data->title());
-                    layout->insertWidget((_d->mShowMaskOrientation == TabWidget::LEFT || _d->mShowMaskOrientation == TabWidget::TOP) ? index : index + 1, newTab);
-                }
-                else
-                {
-                    if(currentContainer->_d->isAnyOrirentaion())
-                    {
-                        layout->setOrientation((Qt::Orientation)orientation);
-                        goto SAME_ORI;
-                    }
-
-                    TabContainer* newContainer = currentContainer->_d->createContainer();
-                    newContainer->_d->pMainLayoutSplitter->setOrientation((Qt::Orientation)orientation);
-
-                    QWidget* oldWidget = currentContainer-> _d->pMainLayoutSplitter->replaceWidget(index, newContainer);
-                    Q_ASSERT(this == oldWidget);
-                    _d->pContainer = newContainer;
-
-                    TabWidget* newTab = newContainer->_d->createTabWidget();
-                    newTab->addTab(page, title);
-
-                    if((_d->mShowMaskOrientation == TabWidget::LEFT || _d->mShowMaskOrientation == TabWidget::TOP))
-                    {
-                        *newContainer->_d->pMainLayoutSplitter << newTab << oldWidget;
-                    }
-                    else
-                    {
-                        *newContainer->_d->pMainLayoutSplitter << oldWidget << newTab;
-                    }
-                }
-
-            }
+            _d->addPage(page, title, _d->mShowMaskOrientation);
 
             fromContainer->_d->rebuildStructure();
             _d->pContainer->_d->rebuildStructure();
@@ -819,6 +830,11 @@ QWidget* TabSplitter::widget(int index)
     return _d->mValidWidgets.at(index);
 }
 
+QList<QWidget*> TabSplitter::allWidget()
+{
+    return _d->mValidWidgets;
+}
+
 QWidget* TabSplitter::tabkeWidget(int index)
 {
     QWidget * w = _d->mValidWidgets.takeAt(index);
@@ -946,6 +962,19 @@ void TabContainer::addPage(QWidget* page, const QString& label, bool split)
     TabWidget* tab = _d->createTabWidget();
     tab->addTab(page, label);
     _d->pMainLayoutSplitter->addWidget(tab);
+}
+
+void TabContainer::addPage(QWidget* page, const QString& label, QWidget* splitFrom, TabWidget::Orientations ori)
+{
+    QList<TabWidget*> tabWidgets = this->findChildren<TabWidget*>();
+    for(TabWidget* w: tabWidgets)
+    {
+        if(w->indexOf(splitFrom) != -1)
+        {
+            w->_d->addPage(page, label, ori);
+            return;
+        }
+    }
 }
 
 void TabContainer::removeAll()
