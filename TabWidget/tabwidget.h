@@ -15,6 +15,7 @@ class TabMoveMimeData : public QMimeData{
     Q_OBJECT
 public:
     TabMoveMimeData();
+    ~TabMoveMimeData();
 public:
     void setPage(QWidget* page);
     QWidget* page() const;
@@ -32,6 +33,7 @@ class TabBar: public QTabBar{
     Q_OBJECT
 private:
     TabBar(TabWidget* tabwidget, QWidget *parent = nullptr);
+    ~TabBar();
 
 signals:
     void tabDraged(int index);
@@ -63,6 +65,7 @@ public:
     };
 private:
     TabWidget(TabContainer* container, QWidget *parent = nullptr);
+    ~TabWidget();
 
 protected:
     virtual void dragEnterEvent(QDragEnterEvent* event) override;
@@ -74,7 +77,6 @@ protected:
     virtual void tabRemoved(int index) override;
 
 signals:
-    void pageRemoved();
     void pageEntered(const TabMoveMimeData* data, Orientations ori);
 private slots:
     void onTabDraged(int index);
@@ -90,6 +92,7 @@ class TabSplitter : public QSplitter
 {
 private:
     explicit TabSplitter(QWidget* parent = nullptr);
+    ~TabSplitter();
 
 public:
     void addWidget(QWidget *w);
@@ -120,12 +123,18 @@ class TabContainer : public QWidget
     Q_OBJECT
 public:
     TabContainer(QWidget* parent = nullptr);
+    ~TabContainer();
 
     void addPage(QWidget *page, const QString &label);
     void addPage(QWidget *page, const QString &label, bool split);
     void addPage(QWidget *page, const QString &label, QWidget* splitFrom, TabWidget::Orientations ori);
+    void removePage(QWidget* page);
     void removeAll();
 
+    void setTabsClosable(bool closeable);
+
+signals:
+    void pageCloseRequested(QWidget* page, const QString& label);
 private:
     class TabContainerPrivate* _d;
     friend class TabContainerPrivate;

@@ -9,6 +9,7 @@ Widget::Widget(QWidget *parent)
     , ui(new Ui::Widget)
 {
     ui->setupUi(this);
+    ui->widget->setTabsClosable(true);
 }
 
 Widget::~Widget()
@@ -87,5 +88,12 @@ void Widget::on_pushButton_4_clicked()
                                                                                4))));
 
     ui->widget->addPage(w, title, allWidgets.value(baseTitle), ori);
+}
+
+
+void Widget::on_widget_pageCloseRequested(QWidget *w, const QString &)
+{
+    qDebug() << "on page close request";
+    ui->widget->removePage(w);
 }
 

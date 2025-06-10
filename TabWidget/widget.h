@@ -26,6 +26,8 @@ private slots:
 
     void on_pushButton_4_clicked();
 
+    void on_widget_pageCloseRequested(QWidget *w, const QString &);
+
 private:
     Ui::Widget *ui;
 

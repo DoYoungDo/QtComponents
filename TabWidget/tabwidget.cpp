@@ -30,6 +30,10 @@ QColor invertColor(const QColor &color) {
 
 class TabMoveMimeDataPrivate{
     TabMoveMimeDataPrivate(TabMoveMimeData* q):_q(q){}
+    ~TabMoveMimeDataPrivate()
+    {
+        mDatas.clear();
+    }
 
 private:
     QMap<QString, QVariant> mDatas;
@@ -43,6 +47,15 @@ TabMoveMimeData::TabMoveMimeData()
     :_d(new TabMoveMimeDataPrivate(this))
 {
 
+}
+
+TabMoveMimeData::~TabMoveMimeData()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
 }
 
 void TabMoveMimeData::setPage(QWidget* page)
@@ -149,13 +162,7 @@ private:
 /************************* ⬆︎ TabBarPrivate ⬆︎ *************************/
 
 class TabWidgetPrivate{
-    TabWidgetPrivate(TabWidget* q):_q(q)
-    {
-        pTabbar = new TabBar(_q, _q);
-        _q->connect(pTabbar, &TabBar::tabDraged, _q, &TabWidget::onTabDraged);
-
-        _q->setTabBar(pTabbar);
-    }
+    TabWidgetPrivate(TabWidget* q);
 
     bool canTrop(const TabMoveMimeData *data,QPointF pos)
     {
@@ -277,6 +284,10 @@ private:
 class TabSplitterPrivate
 {
     TabSplitterPrivate(TabSplitter* q):_q(q){}
+    ~TabSplitterPrivate()
+    {
+        mValidWidgets.clear();
+    }
 
 private:
     TabSplitter* _q;
@@ -291,6 +302,12 @@ private:
     TabContainerPrivate(TabContainer* q):_q(q)
     {
         setupUi();
+    }
+    ~TabContainerPrivate()
+    {
+        pMainLayoutSplitter = nullptr;
+        pParentContainer = nullptr;
+        _q = nullptr;
     }
 
     void setupUi()
@@ -311,12 +328,14 @@ private:
     TabWidget* createTabWidget()
     {
         TabWidget* tabWidget = new TabWidget(_q);
+        tabWidget->setTabsClosable(mTabsClosable);
         return tabWidget;
     }
 
     TabContainer* createContainer()
     {
         TabContainer* container = new TabContainer();
+        container->setTabsClosable(mTabsClosable);
         container->_d->pParentContainer = _q;
 
         return  container;
@@ -462,6 +481,7 @@ private:
 private:
     TabSplitter* pMainLayoutSplitter = nullptr;
     TabContainer* pParentContainer = nullptr;
+    bool mTabsClosable = false;
 
     TabContainer* _q = nullptr;
     friend class TabContainer;
@@ -470,6 +490,20 @@ private:
     friend class TabWidgetPrivate;
 };
 /************************* ⬆︎ TabContainerPrivate ⬆︎ *************************/
+
+TabWidgetPrivate::TabWidgetPrivate(TabWidget* q):_q(q)
+{
+    pTabbar = new TabBar(_q, _q);
+    _q->connect(pTabbar, &TabBar::tabDraged, _q, &TabWidget::onTabDraged);
+    _q->connect(pTabbar, &TabBar::tabCloseRequested, _q, [this](int index){
+        QWidget* w = _q->widget(index);
+        Q_ASSERT(w);
+        QString title = _q->tabText(index);
+        emit pContainer->pageCloseRequested(w, title);
+    });
+
+    _q->setTabBar(pTabbar);
+}
 
 void TabWidgetPrivate::addPage(QWidget* page, const QString& title, TabWidget::Orientations ori)
 {
@@ -528,6 +562,15 @@ TabBar::TabBar(TabWidget* tabwidget, QWidget* parent)
     ,_d(new TabBarPrivate(this, tabwidget))
 {
     this->setAcceptDrops(true);
+}
+
+TabBar::~TabBar()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
 }
 
 void TabBar::mousePressEvent(QMouseEvent* event)
@@ -652,6 +695,15 @@ TabWidget::TabWidget(TabContainer* container, QWidget* parent)
     _d->pContainer = container;
 }
 
+TabWidget::~TabWidget()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
+}
+
 void TabWidget::dragEnterEvent(QDragEnterEvent* event)
 {
     const TabMoveMimeData *data = qobject_cast<const TabMoveMimeData *>(event->mimeData());
@@ -771,6 +823,15 @@ TabSplitter::TabSplitter(QWidget* parent)
     , _d(new TabSplitterPrivate(this))
 {
     this->setChildrenCollapsible(false);
+}
+
+TabSplitter::~TabSplitter()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
 }
 
 void TabSplitter::addWidget(QWidget* w)
@@ -926,7 +987,23 @@ TabContainer::TabContainer(QWidget* parent)
     :QWidget(parent)
     ,_d(new TabContainerPrivate(this))
 {
+    connect(this, &TabContainer::pageCloseRequested, this, [this](QWidget* page, const QString& label){
+        qDebug() << "container close";
+        if(_d->pParentContainer)
+        {
+            qDebug() << "has parent";
+            emit _d->pParentContainer->pageCloseRequested(page, label);
+        }
+    });
+}
 
+TabContainer::~TabContainer()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
 }
 
 void TabContainer::addPage(QWidget* page, const QString& label)
@@ -977,9 +1054,40 @@ void TabContainer::addPage(QWidget* page, const QString& label, QWidget* splitFr
     }
 }
 
+void TabContainer::removePage(QWidget* page)
+{
+    QList<TabWidget*> tabWidgets = this->findChildren<TabWidget*>();
+    for(TabWidget* w: tabWidgets)
+    {
+        int index = w->indexOf(page);
+        if(index != -1)
+        {
+            w->removeTab(index);
+            w->_d->pContainer->_d->rebuildStructure();
+            return;
+        }
+    }
+}
+
 void TabContainer::removeAll()
 {
     _d->pMainLayoutSplitter->removeAll();
+}
+
+void TabContainer::setTabsClosable(bool closeable)
+{
+    if(_d->mTabsClosable == closeable)
+    {
+        return;
+    }
+
+    _d->mTabsClosable = closeable;
+
+    QList<TabWidget*> tabWidgets = this->findChildren<TabWidget*>();
+    for(TabWidget* w: tabWidgets)
+    {
+        w->setTabsClosable(_d->mTabsClosable);
+    }
 }
 
 #ifdef TAB_TEST

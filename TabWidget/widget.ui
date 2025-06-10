@@ -167,6 +167,9 @@
    <extends>QWidget</extends>
    <header>../../../../TabWidget/tabwidget.h</header>
    <container>1</container>
+   <slots>
+    <signal>pageCloseRequested(QWidget*,QString)</signal>
+   </slots>
   </customwidget>
  </customwidgets>
  <resources/>
