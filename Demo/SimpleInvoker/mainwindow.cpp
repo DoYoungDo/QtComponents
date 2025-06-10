@@ -19,14 +19,14 @@ static SimpleAutoReg<BEROE_CREATE_WINDOW> windowCreate([](){
     qDebug() << "on window create";
 });
 
-static SimpleAutoReg<AFTER_CREATE_WINDOW, MainWindow*> windowCreated([](MainWindow* w){
+static SimpleAutoReg<AFTER_CREATE_WINDOW, void, MainWindow*> windowCreated([](MainWindow* w){
     qDebug() << "on window created";
 });
 
-static SimpleAutoReg<BEROE_SHOW_WINDOW, MainWindow*> windowShow([](MainWindow* w){
+static SimpleAutoReg<BEROE_SHOW_WINDOW, void, MainWindow*> windowShow([](MainWindow* w){
     qDebug() << "on window show";
 });
 
-static SimpleAutoReg<AFTER_SHOW_WINDOW, MainWindow*> windowShowed([](MainWindow* w){
+static SimpleAutoReg<AFTER_SHOW_WINDOW, void, MainWindow*> windowShowed([](MainWindow* w){
     qDebug() << "on window showed";
 });
