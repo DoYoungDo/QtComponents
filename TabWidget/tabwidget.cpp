@@ -30,6 +30,10 @@ QColor invertColor(const QColor &color) {
 
 class TabMoveMimeDataPrivate{
     TabMoveMimeDataPrivate(TabMoveMimeData* q):_q(q){}
+    ~TabMoveMimeDataPrivate()
+    {
+        mDatas.clear();
+    }
 
 private:
     QMap<QString, QVariant> mDatas;
@@ -43,6 +47,15 @@ TabMoveMimeData::TabMoveMimeData()
     :_d(new TabMoveMimeDataPrivate(this))
 {
 
+}
+
+TabMoveMimeData::~TabMoveMimeData()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
 }
 
 void TabMoveMimeData::setPage(QWidget* page)
@@ -149,13 +162,7 @@ private:
 /************************* ⬆︎ TabBarPrivate ⬆︎ *************************/
 
 class TabWidgetPrivate{
-    TabWidgetPrivate(TabWidget* q):_q(q)
-    {
-        pTabbar = new TabBar(_q, _q);
-        _q->connect(pTabbar, &TabBar::tabDraged, _q, &TabWidget::onTabDraged);
-
-        _q->setTabBar(pTabbar);
-    }
+    TabWidgetPrivate(TabWidget* q);
 
     bool canTrop(const TabMoveMimeData *data,QPointF pos)
     {
@@ -239,6 +246,8 @@ class TabWidgetPrivate{
         _q->repaint();
     }
 
+    void addPage(QWidget* page, const QString& title, TabWidget::Orientations ori);
+
     QPixmap createPixmap(const QString& title)
     {
         QFontMetrics metriceF = _q->fontMetrics();
@@ -267,6 +276,7 @@ private:
     TabWidget* _q;
     friend class TabWidget;
     friend class TabBar;
+    friend class TabContainer;
     friend class TabContainerPrivate;
 };
 /************************* ⬆︎ TabWidgetPrivate ⬆︎ *************************/
@@ -274,6 +284,10 @@ private:
 class TabSplitterPrivate
 {
     TabSplitterPrivate(TabSplitter* q):_q(q){}
+    ~TabSplitterPrivate()
+    {
+        mValidWidgets.clear();
+    }
 
 private:
     TabSplitter* _q;
@@ -288,6 +302,12 @@ private:
     TabContainerPrivate(TabContainer* q):_q(q)
     {
         setupUi();
+    }
+    ~TabContainerPrivate()
+    {
+        pMainLayoutSplitter = nullptr;
+        pParentContainer = nullptr;
+        _q = nullptr;
     }
 
     void setupUi()
@@ -308,12 +328,14 @@ private:
     TabWidget* createTabWidget()
     {
         TabWidget* tabWidget = new TabWidget(_q);
+        tabWidget->setTabsClosable(mTabsClosable);
         return tabWidget;
     }
 
     TabContainer* createContainer()
     {
         TabContainer* container = new TabContainer();
+        container->setTabsClosable(mTabsClosable);
         container->_d->pParentContainer = _q;
 
         return  container;
@@ -454,22 +476,101 @@ private:
             pParentContainer->_d->rebuildStructure();
         }
     }
+
+
 private:
     TabSplitter* pMainLayoutSplitter = nullptr;
+    TabContainer* pParentContainer = nullptr;
+    bool mTabsClosable = false;
 
     TabContainer* _q = nullptr;
     friend class TabContainer;
     friend class TabBar;
     friend class TabWidget;
-    TabContainer* pParentContainer = nullptr;
+    friend class TabWidgetPrivate;
 };
 /************************* ⬆︎ TabContainerPrivate ⬆︎ *************************/
+
+TabWidgetPrivate::TabWidgetPrivate(TabWidget* q):_q(q)
+{
+    pTabbar = new TabBar(_q, _q);
+    _q->connect(pTabbar, &TabBar::tabDraged, _q, &TabWidget::onTabDraged);
+    _q->connect(pTabbar, &TabBar::tabCloseRequested, _q, [this](int index){
+        QWidget* w = _q->widget(index);
+        Q_ASSERT(w);
+        QString title = _q->tabText(index);
+        emit pContainer->pageCloseRequested(w, title);
+    });
+
+    _q->setTabBar(pTabbar);
+}
+
+void TabWidgetPrivate::addPage(QWidget* page, const QString& title, TabWidget::Orientations ori)
+{
+    if(ori == TabWidget::CENTER)
+    {
+        _q->addTab(page, title);
+    }
+    else
+    {
+        TabContainer* currentContainer = pContainer;
+        TabSplitter* layout = currentContainer->_d->pMainLayoutSplitter;
+        int index = layout->indexOf(_q);
+        Q_ASSERT(index != -1);
+
+        int orientation = (ori == TabWidget::LEFT || ori == TabWidget::RIGHT) ? Qt::Horizontal : Qt::Vertical;
+        if(orientation == layout->orientation())
+        {
+SAME_ORI:
+            TabWidget* newTab = currentContainer->_d->createTabWidget();
+            newTab->addTab(page, title);
+            layout->insertWidget((ori == TabWidget::LEFT || ori == TabWidget::TOP) ? index : index + 1, newTab);
+        }
+        else
+        {
+            if(currentContainer->_d->isAnyOrirentaion())
+            {
+                layout->setOrientation((Qt::Orientation)orientation);
+                goto SAME_ORI;
+            }
+
+            TabContainer* newContainer = currentContainer->_d->createContainer();
+            newContainer->_d->pMainLayoutSplitter->setOrientation((Qt::Orientation)orientation);
+
+            QWidget* oldWidget = currentContainer-> _d->pMainLayoutSplitter->replaceWidget(index, newContainer);
+            Q_ASSERT(_q == oldWidget);
+            pContainer = newContainer;
+
+            TabWidget* newTab = newContainer->_d->createTabWidget();
+            newTab->addTab(page, title);
+
+            if((ori == TabWidget::LEFT || ori == TabWidget::TOP))
+            {
+                *newContainer->_d->pMainLayoutSplitter << newTab << oldWidget;
+            }
+            else
+            {
+                *newContainer->_d->pMainLayoutSplitter << oldWidget << newTab;
+            }
+        }
+    }
+}
+/************************* ⬆︎ TabWidgetPrivate impletment ⬆︎ *************************/
 
 TabBar::TabBar(TabWidget* tabwidget, QWidget* parent)
     :QTabBar(parent)
     ,_d(new TabBarPrivate(this, tabwidget))
 {
     this->setAcceptDrops(true);
+}
+
+TabBar::~TabBar()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
 }
 
 void TabBar::mousePressEvent(QMouseEvent* event)
@@ -594,6 +695,15 @@ TabWidget::TabWidget(TabContainer* container, QWidget* parent)
     _d->pContainer = container;
 }
 
+TabWidget::~TabWidget()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
+}
+
 void TabWidget::dragEnterEvent(QDragEnterEvent* event)
 {
     const TabMoveMimeData *data = qobject_cast<const TabMoveMimeData *>(event->mimeData());
@@ -641,54 +751,7 @@ void TabWidget::dropEvent(QDropEvent* event)
             TabContainer* fromContainer = from->_d->pContainer;
             from->removeTab(index);
 
-            if(_d->mShowMaskOrientation == CENTER)
-            {
-                this->addTab(page, title);
-            }
-            else
-            {
-                TabContainer* currentContainer = _d->pContainer;
-                TabSplitter* layout = currentContainer->_d->pMainLayoutSplitter;
-                int index = layout->indexOf(this);
-                Q_ASSERT(index != -1);
-
-                int orientation = (_d->mShowMaskOrientation == TabWidget::LEFT || _d->mShowMaskOrientation == TabWidget::RIGHT) ? Qt::Horizontal : Qt::Vertical;
-                if(orientation == layout->orientation())
-                {
-SAME_ORI:
-                    TabWidget* newTab = currentContainer->_d->createTabWidget();
-                    newTab->addTab(data->page(), data->title());
-                    layout->insertWidget((_d->mShowMaskOrientation == TabWidget::LEFT || _d->mShowMaskOrientation == TabWidget::TOP) ? index : index + 1, newTab);
-                }
-                else
-                {
-                    if(currentContainer->_d->isAnyOrirentaion())
-                    {
-                        layout->setOrientation((Qt::Orientation)orientation);
-                        goto SAME_ORI;
-                    }
-
-                    TabContainer* newContainer = currentContainer->_d->createContainer();
-                    newContainer->_d->pMainLayoutSplitter->setOrientation((Qt::Orientation)orientation);
-
-                    QWidget* oldWidget = currentContainer-> _d->pMainLayoutSplitter->replaceWidget(index, newContainer);
-                    Q_ASSERT(this == oldWidget);
-                    _d->pContainer = newContainer;
-
-                    TabWidget* newTab = newContainer->_d->createTabWidget();
-                    newTab->addTab(page, title);
-
-                    if((_d->mShowMaskOrientation == TabWidget::LEFT || _d->mShowMaskOrientation == TabWidget::TOP))
-                    {
-                        *newContainer->_d->pMainLayoutSplitter << newTab << oldWidget;
-                    }
-                    else
-                    {
-                        *newContainer->_d->pMainLayoutSplitter << oldWidget << newTab;
-                    }
-                }
-
-            }
+            _d->addPage(page, title, _d->mShowMaskOrientation);
 
             fromContainer->_d->rebuildStructure();
             _d->pContainer->_d->rebuildStructure();
@@ -762,6 +825,15 @@ TabSplitter::TabSplitter(QWidget* parent)
     this->setChildrenCollapsible(false);
 }
 
+TabSplitter::~TabSplitter()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
+}
+
 void TabSplitter::addWidget(QWidget* w)
 {
     if(_d->mValidWidgets.contains(w))
@@ -817,6 +889,11 @@ QWidget* TabSplitter::widget(int index)
         return nullptr;
     }
     return _d->mValidWidgets.at(index);
+}
+
+QList<QWidget*> TabSplitter::allWidget()
+{
+    return _d->mValidWidgets;
 }
 
 QWidget* TabSplitter::tabkeWidget(int index)
@@ -910,7 +987,23 @@ TabContainer::TabContainer(QWidget* parent)
     :QWidget(parent)
     ,_d(new TabContainerPrivate(this))
 {
+    connect(this, &TabContainer::pageCloseRequested, this, [this](QWidget* page, const QString& label){
+        qDebug() << "container close";
+        if(_d->pParentContainer)
+        {
+            qDebug() << "has parent";
+            emit _d->pParentContainer->pageCloseRequested(page, label);
+        }
+    });
+}
 
+TabContainer::~TabContainer()
+{
+    if(_d)
+    {
+        delete _d;
+        _d = nullptr;
+    }
 }
 
 void TabContainer::addPage(QWidget* page, const QString& label)
@@ -948,9 +1041,53 @@ void TabContainer::addPage(QWidget* page, const QString& label, bool split)
     _d->pMainLayoutSplitter->addWidget(tab);
 }
 
+void TabContainer::addPage(QWidget* page, const QString& label, QWidget* splitFrom, TabWidget::Orientations ori)
+{
+    QList<TabWidget*> tabWidgets = this->findChildren<TabWidget*>();
+    for(TabWidget* w: tabWidgets)
+    {
+        if(w->indexOf(splitFrom) != -1)
+        {
+            w->_d->addPage(page, label, ori);
+            return;
+        }
+    }
+}
+
+void TabContainer::removePage(QWidget* page)
+{
+    QList<TabWidget*> tabWidgets = this->findChildren<TabWidget*>();
+    for(TabWidget* w: tabWidgets)
+    {
+        int index = w->indexOf(page);
+        if(index != -1)
+        {
+            w->removeTab(index);
+            w->_d->pContainer->_d->rebuildStructure();
+            return;
+        }
+    }
+}
+
 void TabContainer::removeAll()
 {
     _d->pMainLayoutSplitter->removeAll();
+}
+
+void TabContainer::setTabsClosable(bool closeable)
+{
+    if(_d->mTabsClosable == closeable)
+    {
+        return;
+    }
+
+    _d->mTabsClosable = closeable;
+
+    QList<TabWidget*> tabWidgets = this->findChildren<TabWidget*>();
+    for(TabWidget* w: tabWidgets)
+    {
+        w->setTabsClosable(_d->mTabsClosable);
+    }
 }
 
 #ifdef TAB_TEST
