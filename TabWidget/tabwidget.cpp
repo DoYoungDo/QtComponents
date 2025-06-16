@@ -1010,6 +1010,7 @@ void TabContainer::addPage(QWidget* page, const QString& label)
     {
         TabWidget* tab = _d->createTabWidget();
         tab->addTab(page, label);
+        tab->setCurrentWidget(page);
         _d->pMainLayoutSplitter->addWidget(tab);
     }
     else
@@ -1022,6 +1023,7 @@ void TabContainer::addPage(QWidget* page, const QString& label)
         else
         {
             qobject_cast<TabWidget*>(ele)->addTab(page, label);
+            qobject_cast<TabWidget*>(ele)->setCurrentWidget(page);
         }
     }
 }
@@ -1085,6 +1087,20 @@ void TabContainer::setTabsClosable(bool closeable)
     for(TabWidget* w: tabWidgets)
     {
         w->setTabsClosable(_d->mTabsClosable);
+    }
+}
+
+void TabContainer::setPageLabel(QWidget* page, const QString& label)
+{
+    QList<TabWidget*> tabWidgets = this->findChildren<TabWidget*>();
+    for(TabWidget* w: tabWidgets)
+    {
+        int index = w->indexOf(page);
+        if(index != -1)
+        {
+            w->setTabText(index, label);
+            return;
+        }
     }
 }
 

@@ -133,6 +133,8 @@ public:
 
     void setTabsClosable(bool closeable);
 
+    void setPageLabel(QWidget* page, const QString& label);
+
 signals:
     void pageCloseRequested(QWidget* page, const QString& label);
 private:
