@@ -233,7 +233,8 @@ class TabWidgetPrivate{
             mShowMask = false;
         }
 
-        _q->repaint();
+        pMaskWidget->setGeometry(QRect(_q->mapFromGlobal(curWidget->mapToGlobal(mShowMaskRect.topLeft())), mShowMaskRect.size()));
+        pMaskWidget->setVisible(mShowMask);
     }
     void hideTabMask()
     {
@@ -243,7 +244,7 @@ class TabWidgetPrivate{
         }
 
         mShowMask = false;
-        _q->repaint();
+        pMaskWidget->setVisible(mShowMask);
     }
 
     void addPage(QWidget* page, const QString& title, TabWidget::Orientations ori);
@@ -274,6 +275,7 @@ private:
     TabWidget::Orientations mShowMaskOrientation = TabWidget::CENTER;
     TabContainer* pContainer = nullptr;
     TabWidget* _q;
+    QWidget* pMaskWidget = nullptr;
     friend class TabWidget;
     friend class TabBar;
     friend class TabContainer;
@@ -503,6 +505,10 @@ TabWidgetPrivate::TabWidgetPrivate(TabWidget* q):_q(q)
     });
 
     _q->setTabBar(pTabbar);
+
+    pMaskWidget = new QWidget(_q);
+    pMaskWidget->setVisible(mShowMask);
+    pMaskWidget->installEventFilter(_q);
 }
 
 void TabWidgetPrivate::addPage(QWidget* page, const QString& title, TabWidget::Orientations ori)
@@ -764,26 +770,6 @@ void TabWidget::dropEvent(QDropEvent* event)
     QTabWidget::dropEvent(event);
 }
 
-void TabWidget::paintEvent(QPaintEvent* event)
-{
-    QTabWidget::paintEvent(event);
-
-    if(_d->mShowMask)
-    {
-        QWidget* curWidget = this->currentWidget();
-        QRect curRect = curWidget->geometry();
-
-        QPointF curPos = this->mapFromGlobal(curWidget->mapToGlobal(curRect.topLeft()));
-
-        QPainter p(this);
-        p.setOpacity(MASK_OPACITY);
-        p.translate(curPos);
-        p.setPen(Qt::transparent);
-        p.setBrush(invertColor(this->palette().brush(QPalette::Window).color()));
-        p.drawRoundedRect(_d->mShowMaskRect, 2, 2);
-    }
-}
-
 void TabWidget::tabInserted(int index)
 {
     // qDebug() << "tab insert" << index << this->count();
@@ -797,6 +783,18 @@ void TabWidget::tabRemoved(int index)
     if(this->count() == 0)
     {
         _d->pContainer->_d->pMainLayoutSplitter->removeWidget(this);
+    }
+}
+
+bool TabWidget::eventFilter(QObject* watched, QEvent* event)
+{
+    if(watched == _d->pMaskWidget && event->type() == QEvent::Paint)
+    {
+        QPainter p(_d->pMaskWidget);
+        p.setOpacity(MASK_OPACITY);
+        p.setPen(Qt::transparent);
+        p.setBrush(invertColor(this->palette().brush(QPalette::Window).color()));
+        p.drawRoundedRect(_d->pMaskWidget->rect(), 2, 2);
     }
 }
 

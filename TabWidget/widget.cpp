@@ -3,6 +3,7 @@
 
 #include <QLabel>
 #include <QMessageBox>
+#include <QPlainTextEdit>
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
@@ -26,8 +27,11 @@ void Widget::on_pushButton_clicked()
         return;
     }
 
-    QWidget* w = new QWidget;
-    QLabel* l = new QLabel(title,w);
+    // QWidget* w = new QWidget;
+    // QLabel* l = new QLabel(title,w);
+
+    QPlainTextEdit* w = new QPlainTextEdit();
+    w->setPlainText(title);
 
     allWidgets.insert(title, w);
 
