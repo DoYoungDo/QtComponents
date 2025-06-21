@@ -796,6 +796,7 @@ bool TabWidget::eventFilter(QObject* watched, QEvent* event)
         p.setBrush(invertColor(this->palette().brush(QPalette::Window).color()));
         p.drawRoundedRect(_d->pMaskWidget->rect(), 2, 2);
     }
+    return QTabWidget::eventFilter(watched, event);
 }
 
 void TabWidget::onTabDraged(int index)
